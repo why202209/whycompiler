@@ -94,7 +94,7 @@ void Visit(const koopa_raw_return_t &ret){
     // integer 中, value 代表整数的数值
     int32_t int_val = ret_value->kind.data.integer.value;
     // 示例程序中, 这个数值一定是 0
-    assert(int_val == 0);
+    //assert(int_val == 0);
     std::cout<<"  li a0, "<<int_val<<std::endl;
     std::cout<<"  ret"<<std::endl;
 }
