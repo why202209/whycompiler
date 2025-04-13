@@ -91,6 +91,7 @@ int main(int argc, const char *argv[]) {
   t.close();
 
   //cout<<buffer<<endl;
+  buffer[length-1]=0;
   
   if(string(mode)=="-riscv"){
     fclose(stdout);
