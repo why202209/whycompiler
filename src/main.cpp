@@ -37,6 +37,9 @@ int main(int argc, const char *argv[]) {
 #include <memory>
 #include <string>
 #include "ast.hpp"
+#include <fstream>
+#include "koopa.h"
+#include "visit.hpp"
 
 using namespace std;
 
@@ -73,7 +76,49 @@ int main(int argc, const char *argv[]) {
   // 输出解析得到的 AST, 其实就是个字符串
   ast->Dump();
   //cout << *ast << endl;
+  if(string(mode)=="-koopa"){
+    freopen("/dev/tty", "w", stdout);
+  }
 
+  std::ifstream t;  
+  int length;  
+  t.open(output);      // open input file  
+  t.seekg(0, std::ios::end);    // go to the end  
+  length = t.tellg();           // report location (this is the length)  
+  t.seekg(0, std::ios::beg);    // go back to the beginning  
+  char* buffer = new char[length];    // allocate memory for a buffer of appropriate dimension  
+  t.read(buffer, length);       // read the whole file into the buffer  
+  t.close();
+
+  //cout<<buffer<<endl;
+  
+  if(string(mode)=="-riscv"){
+    fclose(stdout);
+    freopen(output, "w",stdout);
+  }
+
+  // 解析字符串 str, 得到 Koopa IR 程序
+  koopa_program_t program;
+  koopa_error_code_t ret_raw = koopa_parse_from_string(buffer, &program);
+  assert(ret_raw == KOOPA_EC_SUCCESS);  // 确保解析时没有出错
+  // 创建一个 raw program builder, 用来构建 raw program
+  koopa_raw_program_builder_t builder = koopa_new_raw_program_builder();
+  // 将 Koopa IR 程序转换为 raw program
+  koopa_raw_program_t raw = koopa_build_raw_program(builder, program);
+  // 释放 Koopa IR 程序占用的内存
+  koopa_delete_program(program);
+
+  // 处理 raw program
+  // ...
+  Visit(raw);
+
+  // 处理完成, 释放 raw program builder 占用的内存
+  // 注意, raw program 中所有的指针指向的内存均为 raw program builder 的内存
+  // 所以不要在 raw program 处理完毕之前释放 builder
+  koopa_delete_raw_program_builder(builder);
+
+  delete[] buffer;
+  
   fclose(stdout);
 
   return 0;
