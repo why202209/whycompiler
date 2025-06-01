@@ -9,6 +9,8 @@
 #include <iostream>
 #include <memory>
 #include <string>
+#include <cstring>
+#include <vector>
 #include "ast.hpp"
 
 // 声明 lexer 函数和错误处理函数
@@ -34,6 +36,7 @@ using namespace std;
 %union {
   std::string *str_val;
   int int_val;
+  char char_val;
   BaseAST *ast_val;
 }
 
@@ -47,6 +50,8 @@ using namespace std;
 //%type <str_val> FuncDef FuncType Block Stmt Number
 %type <ast_val> FuncDef FuncType Block Stmt Number
 //%type <int_val> Number
+%type <ast_val> Exp PrimaryExp UnaryExp 
+%type <char_val> UnaryOp
 
 %%
 
@@ -109,14 +114,10 @@ Block
   ;
 
 Stmt
-  : RETURN Number ';' {
-    auto number = unique_ptr<BaseAST>($2);
-    //$$ = new string("return " + *number + ";");
+  : RETURN Exp ';' {
     auto ast=new StmtAST();
-    ast->retval=0;
-    unique_ptr<string> ptr(new string("return " + to_string(ast->retval) + ";"));
-    ast->sentence=move(ptr);
-    ast->num=move(number);
+    ast->fg = 2;
+    ast->exp = unique_ptr<BaseAST>($2);
     $$=ast;
   }
   ;
@@ -130,11 +131,70 @@ Number
   }
   ;
 
+UnaryOp
+  : '+' {
+    $$ = '+';
+  }
+  | '-' {
+    $$ = '-';
+  }
+  | '!' {
+    $$ = '!';
+  }
+  ;
+
+Exp
+  : UnaryExp{
+    auto ast = new ExpAST();
+    ast->unaryexp = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  ;
+
+PrimaryExp
+  : '(' Exp ')' {
+    auto ast = new PrimaryExpAST();
+    ast->fg = 1;
+    ast->exp = unique_ptr<BaseAST>($2);
+    $$ = ast;
+  } 
+  | Number {
+    auto ast = new PrimaryExpAST();
+    ast->fg = 2;
+    ast->exp = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  ;
+
+UnaryExp    
+  : PrimaryExp {
+    auto ast = new UnaryExpAST();
+    ast->fg = 1;
+    ast->primaryexp = unique_ptr<BaseAST>($1);
+    $$ = ast;
+  }
+  | UnaryOp UnaryExp {
+    auto ast = new UnaryExpAST();
+    ast->fg = 2;
+    ast->unaryop = $1;
+    ast->unaryexp = unique_ptr<BaseAST>($2);
+    $$ = ast;
+  }
+  ;
+
 %%
 
 // 定义错误处理函数, 其中第二个参数是错误信息
 // parser 如果发生错误 (例如输入的程序出现了语法错误), 就会调用这个函数
 //void yyerror(unique_ptr<string> &ast, const char *s) {
 void yyerror(unique_ptr<BaseAST> &ast, const char *s) {
-  cerr << "error: " << s << endl;
+  //cerr << "error: " << s << endl;  
+  extern int yylineno;
+  extern char *yytext;
+  int len = strlen(yytext);
+  int i;
+  char buf[512] = {0};
+  for (i=0; i<len; ++i)
+    sprintf(buf, "%s%d ", buf, yytext[i]);
+  fprintf(stderr, "ERROR: %s at symbol '%s' on line %d\n", s, buf, yylineno);
 }

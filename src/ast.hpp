@@ -4,6 +4,8 @@
 #include <vector>
 #include<iostream>
 
+static int iridx = 0;
+
 // 所有 AST 的基类
 class BaseAST {
     public:
@@ -61,16 +63,24 @@ class FuncTypeAST : public BaseAST{
 //
 class StmtAST:public BaseAST{
     public:
-    std::unique_ptr<std::string> sentence;
+    int fg;
+    /*std::unique_ptr<std::string> sentence;
     int retval;
-    std::unique_ptr<BaseAST> num;
+    std::unique_ptr<BaseAST> num;*/
+    std::unique_ptr<BaseAST> exp;
 
     void Dump() const override {
-        /*std::cout << "StmtAST { ";
-        std::cout << retval;
-        std::cout << " }";*/
-        std::cout<<"  ret ";//<<std::endl;
-        num->Dump();
+        //if (fg == 1) {
+            /*std::cout << "StmtAST { ";
+            std::cout << retval;
+            std::cout << " }";*/
+            //std::cout<<"  ret ";//<<std::endl;
+            //num->Dump();
+        //}
+        if (fg == 2) {
+            exp->Dump();
+            std::cout<<"  ret %"<< iridx-1 <<std::endl;
+        }
     }
 };
 
@@ -98,5 +108,58 @@ class NumberAST: public BaseAST{
     void Dump() const override {
         std::cout<<val;
         std::cout<<std::endl;
+    }
+};
+
+class ExpAST: public BaseAST{
+    public:
+    std::unique_ptr<BaseAST> unaryexp;
+
+    void Dump() const override {
+        unaryexp->Dump();
+    }
+};
+
+class PrimaryExpAST: public BaseAST{
+    public:
+    int fg;
+    std::unique_ptr<BaseAST> exp;
+
+    void Dump() const override {
+        if(fg==1) {
+            exp->Dump();
+        }
+        else if(fg==2) {
+            std::cout << "  %" << iridx << " = add 0, ";
+            exp->Dump();
+            iridx++;
+        }
+    }
+};
+
+class UnaryExpAST: public BaseAST{
+    public:
+    int fg;
+    std::unique_ptr<BaseAST> primaryexp;
+    char unaryop;
+    std::unique_ptr<BaseAST> unaryexp;
+
+    void Dump() const override {
+        if (fg == 1) {
+            primaryexp->Dump();
+        }
+        else if (fg == 2) {
+            unaryexp->Dump();
+            if(unaryop=='-') {
+                std::cout << "  %" << iridx << " = sub 0, %";
+                std::cout << iridx-1 <<std::endl;
+                iridx++;
+            }
+            else if(unaryop=='!') {
+                std::cout << "  %" << iridx << " = eq 0, %";
+                std::cout << iridx-1 <<std::endl;
+                iridx++;
+            }
+        }
     }
 };
