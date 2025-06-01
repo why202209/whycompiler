@@ -113,10 +113,10 @@ class NumberAST: public BaseAST{
 
 class ExpAST: public BaseAST{
     public:
-    std::unique_ptr<BaseAST> unaryexp;
+    std::unique_ptr<BaseAST> lorexp;
 
     void Dump() const override {
-        unaryexp->Dump();
+        lorexp->Dump();
     }
 };
 
@@ -160,6 +160,192 @@ class UnaryExpAST: public BaseAST{
                 std::cout << iridx-1 <<std::endl;
                 iridx++;
             }
+        }
+    }
+};
+
+class MulExpAST: public BaseAST{
+    public:
+    int fg;
+    std::unique_ptr<BaseAST> unaryexp;
+    std::unique_ptr<BaseAST> mulexp;
+    char mulop;
+
+    void Dump() const override {
+        if(fg==1) {
+            unaryexp->Dump();
+        }
+        else if(fg==2) {
+            mulexp->Dump();
+            int l=iridx-1;
+            unaryexp->Dump();
+            int r=iridx-1;
+
+            if(mulop=='*') {
+                std::cout << "  %" << iridx << " = mul %";
+            }
+            else if(mulop=='/') {
+                std::cout << "  %" << iridx << " = div %";
+            }
+            else if(mulop=='%') {
+                std::cout << "  %" << iridx << " = mod %";
+            }
+            std::cout << l << ", %" << r << std::endl;
+            iridx++;
+        }
+    }
+};
+
+class AddExpAST: public BaseAST{
+    public:
+    int fg;
+    std::unique_ptr<BaseAST> mulexp;
+    std::unique_ptr<BaseAST> addexp;
+    char addop;
+
+    void Dump() const override {
+        if(fg==1) {
+            mulexp->Dump();
+        }
+        else if(fg==2) {
+            addexp->Dump();
+            int l=iridx-1;
+            mulexp->Dump();
+            int r=iridx-1;
+            
+            if(addop=='+') {
+                std::cout << "  %" << iridx << " = add %";
+            }
+            else if(addop=='-') {
+                std::cout << "  %" << iridx << " = sub %";
+            }
+
+            std::cout << l << ", %" << r << std::endl;
+            iridx++;
+        }
+    }
+};
+
+class RelExpAST: public BaseAST{
+    public:
+    int fg;
+    std::unique_ptr<BaseAST> addexp;
+    std::unique_ptr<BaseAST> relexp;
+    std::string relop;
+
+    void Dump() const override {
+        if(fg==1) {
+            addexp->Dump();
+        }
+        else if(fg==2) {
+            relexp->Dump();
+            int l=iridx-1;
+            addexp->Dump();
+            int r=iridx-1;
+            
+            if(relop=="<") {
+                std::cout << "  %" << iridx << " = lt %";
+            }
+            else if(relop==">") {
+                std::cout << "  %" << iridx << " = gt %";
+            }
+            else if(relop==">=") {
+                std::cout << "  %" << iridx << " = ge %";
+            }
+            else if(relop=="<=") {
+                std::cout << "  %" << iridx << " = le %";
+            }
+
+            std::cout << l << ", %" << r << std::endl;
+            iridx++;
+        }
+    }
+};
+
+class EqExpAST: public BaseAST{
+    public:
+    int fg;
+    std::unique_ptr<BaseAST> relexp;
+    std::unique_ptr<BaseAST> eqexp;
+    std::string eqop;
+
+    void Dump() const override {
+        if(fg==1) {
+            relexp->Dump();
+        }
+        else if(fg==2) {
+            eqexp->Dump();
+            int l=iridx-1;
+            relexp->Dump();
+            int r=iridx-1;
+            
+            if(eqop=="==") {
+                std::cout << "  %" << iridx << " = eq %";
+            }
+            else if(eqop=="!=") {
+                std::cout << "  %" << iridx << " = ne %";
+            }
+
+            std::cout << l << ", %" << r << std::endl;
+            iridx++;
+        }
+    }
+};
+
+class LAndExpAST: public BaseAST{
+    public:
+    int fg;
+    std::unique_ptr<BaseAST> eqexp;
+    std::unique_ptr<BaseAST> landexp;
+
+    void Dump() const override {
+        if(fg==1) {
+            eqexp->Dump();
+        }
+        else if(fg==2) {
+            landexp->Dump();
+            int l=iridx-1;
+            eqexp->Dump();
+            int r=iridx-1;
+            
+            std::cout << "  %" << iridx << " = ne %";
+            std::cout << l << ", " << 0 << std::endl;
+            iridx++;
+            std::cout << "  %" << iridx << " = ne %";
+            std::cout << r << ", " << 0 << std::endl;
+            iridx++;
+            std::cout << "  %" << iridx << " = and %";
+            std::cout << iridx-1 << ", %" << iridx-2 << std::endl;
+            iridx++;
+        }
+    }
+};
+
+class LOrExpAST: public BaseAST{
+    public:
+    int fg;
+    std::unique_ptr<BaseAST> landexp;
+    std::unique_ptr<BaseAST> lorexp;
+
+    void Dump() const override {
+        if(fg==1) {
+            landexp->Dump();
+        }
+        else if(fg==2) {
+            lorexp->Dump();
+            int l=iridx-1;
+            landexp->Dump();
+            int r=iridx-1;
+            
+            std::cout << "  %" << iridx << " = ne %";
+            std::cout << l << ", " << 0 << std::endl;
+            iridx++;
+            std::cout << "  %" << iridx << " = ne %";
+            std::cout << r << ", " << 0 << std::endl;
+            iridx++;
+            std::cout << "  %" << iridx << " = or %";
+            std::cout << iridx-1 << ", %" << iridx-2 << std::endl;
+            iridx++;
         }
     }
 };
